@@ -1,3 +1,5 @@
+# Coming Soon 预计5月23日发布
+
 # LoL Chat Translator / 英雄联盟聊天翻译器
 
 一个基于 OCR 的《英雄联盟》实时聊天翻译悬浮窗工具。
