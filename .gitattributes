@@ -1,0 +1,6 @@
+Installer/dist/ export-ignore
+Installer/payload/ export-ignore
+Installer/framework-dependent/ export-ignore
+Installer/LoLChatTranslatorInstaller/Payload.zip export-ignore
+**/bin/ export-ignore
+**/obj/ export-ignore

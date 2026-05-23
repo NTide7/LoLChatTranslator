@@ -1,0 +1,100 @@
+{
+  "Team": {
+    "displayName": "队伍",
+    "aliases": [
+      "队伍",
+      "隊伍",
+      "队伍聊天",
+      "隊伍聊天",
+      "team",
+      "ally",
+      "allies",
+      "팀",
+      "チーム",
+      "đội",
+      "doi",
+      "equipo",
+      "équipe",
+      "equipe",
+      "gruppe",
+      "squadra",
+      "time",
+      "drużyna",
+      "druzyna",
+      "команда",
+      "komanda",
+      "takım",
+      "takim"
+    ],
+    "ocrAliases": [
+      "vxfh",
+      "vdh",
+      "v伍",
+      "队五",
+      "队人伍",
+      "隊五",
+      "tearn",
+      "tcam"
+    ]
+  },
+  "All": {
+    "displayName": "所有人",
+    "aliases": [
+      "所有人",
+      "全部",
+      "全体",
+      "全體",
+      "all",
+      "전체",
+      "全員",
+      "全员",
+      "tất cả",
+      "tat ca",
+      "todos",
+      "tous",
+      "alle",
+      "tutti",
+      "все",
+      "vse",
+      "herkes"
+    ],
+    "ocrAliases": [
+      "aii",
+      "aII",
+      "alI",
+      "ail",
+      "a1l",
+      "a11"
+    ]
+  },
+  "Party": {
+    "displayName": "小队",
+    "aliases": [
+      "小队",
+      "小隊",
+      "party",
+      "premade",
+      "group",
+      "grupo",
+      "groupe",
+      "gruppe",
+      "gruppo",
+      "파티",
+      "パーティー",
+      "パーティ",
+      "nhóm",
+      "nhom",
+      "ปาร์ตี้",
+      "группа",
+      "gruppa",
+      "parti"
+    ],
+    "ocrAliases": [
+      "partv",
+      "parfy",
+      "pany",
+      "小除",
+      "小队"
+    ]
+  }
+}

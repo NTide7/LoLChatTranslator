@@ -1,0 +1,93 @@
+<Window x:Class="LoLChatTranslator.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LOL Chat OCR Translator Overlay"
+        Icon="Assets/AppIcon.ico"
+        Width="520"
+        Height="260"
+        MinWidth="280"
+        MinHeight="160"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Loaded="Window_Loaded"
+        MouseMove="Window_MouseMove"
+        MouseLeave="Window_MouseLeave"
+        PreviewMouseLeftButtonDown="Window_MouseLeftButtonDown">
+    <Border x:Name="RootBorder"
+            Background="#DD111827"
+            CornerRadius="8"
+            Padding="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ScrollViewer x:Name="MessageScrollViewer"
+                          Grid.Row="0"
+                          VerticalScrollBarVisibility="Hidden"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="MessageItemsControl">
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,8">
+                                <TextBlock Text="{Binding OriginalText}"
+                                           Foreground="{Binding HeaderBrush}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding TranslatedText}"
+                                           Foreground="{Binding TextBrush}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           Margin="0,1,0,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Border x:Name="InputPanel"
+                    Grid.Row="1"
+                    Margin="0,6,0,0"
+                    Padding="4"
+                    CornerRadius="5"
+                    BorderThickness="1"
+                    Visibility="Collapsed">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,3">
+                        <TextBlock x:Name="OverlayInputTargetStatusTextBlock"
+                                   VerticalAlignment="Center"
+                                   Foreground="#E5E7EB"
+                                   FontSize="11"
+                                   TextWrapping="Wrap" />
+                    </DockPanel>
+                    <DockPanel LastChildFill="True">
+                        <Button x:Name="OverlayInputSubmitButton"
+                                Content="翻译"
+                                DockPanel.Dock="Right"
+                                MinWidth="58"
+                                MinHeight="24"
+                                Margin="6,0,0,0"
+                                Padding="10,0"
+                                Click="OverlayInputSubmitButton_Click" />
+                        <TextBox x:Name="OverlayInputTextBox"
+                                 MinHeight="24"
+                                 BorderThickness="0"
+                                 VerticalContentAlignment="Center"
+                                 KeyDown="OverlayInputTextBox_KeyDown" />
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,46 @@
+<Window x:Class="LoLChatTranslator.OcrTestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="OCR 测试结果"
+        Icon="Assets/AppIcon.ico"
+        Width="860"
+        Height="620"
+        MinWidth="720"
+        MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        Background="#F4F6F8">
+    <DockPanel Margin="18">
+        <StackPanel DockPanel.Dock="Top"
+                    Orientation="Horizontal"
+                    Margin="0,0,0,12">
+            <Button x:Name="RunAllPreprocessComparisonButton"
+                    Content="运行全部预处理对比"
+                    MinWidth="150"
+                    MinHeight="34"
+                    Click="RunAllPreprocessComparisonButton_Click" />
+            <Button x:Name="CompareDirtyRegionButton"
+                    Content="再次截图并比较上一帧"
+                    MinWidth="170"
+                    MinHeight="34"
+                    Margin="8,0,0,0"
+                    Click="CompareDirtyRegionButton_Click" />
+            <TextBlock x:Name="OcrTestStatusTextBlock"
+                       Margin="12,0,0,0"
+                       VerticalAlignment="Center"
+                       Foreground="#6B7280"
+                       Text="测试窗口默认不调用外部翻译器，只展示 OCR 和后处理结果。" />
+        </StackPanel>
+        <Button DockPanel.Dock="Bottom"
+                Content="关闭"
+                HorizontalAlignment="Right"
+                MinWidth="96"
+                MinHeight="34"
+                Margin="0,14,0,0"
+                Click="CloseButton_Click" />
+
+        <TabControl x:Name="ResultsTabControl"
+                    Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1" />
+    </DockPanel>
+</Window>

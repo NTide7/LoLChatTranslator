@@ -1,0 +1,116 @@
+<Window x:Class="LoLChatTranslator.ColorPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="选择颜色"
+        Icon="Assets/AppIcon.ico"
+        Width="420"
+        Height="380"
+        MinWidth="380"
+        MinHeight="340"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F4F6F8">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock Text="颜色预览"
+                       Width="86"
+                       VerticalAlignment="Center" />
+            <Border x:Name="ColorPreviewBorder"
+                    Height="42"
+                    BorderBrush="#CBD5E1"
+                    BorderThickness="1"
+                    CornerRadius="6" />
+        </DockPanel>
+
+        <UniformGrid Grid.Row="1"
+                     Columns="8"
+                     Rows="2"
+                     Margin="0,0,0,16">
+            <Button Background="#FFFFFF" Tag="#FFFFFF" Click="SwatchButton_Click" />
+            <Button Background="#CBD5E1" Tag="#CBD5E1" Click="SwatchButton_Click" />
+            <Button Background="#93C5FD" Tag="#93C5FD" Click="SwatchButton_Click" />
+            <Button Background="#60A5FA" Tag="#60A5FA" Click="SwatchButton_Click" />
+            <Button Background="#FCA5A5" Tag="#FCA5A5" Click="SwatchButton_Click" />
+            <Button Background="#F87171" Tag="#F87171" Click="SwatchButton_Click" />
+            <Button Background="#C4B5FD" Tag="#C4B5FD" Click="SwatchButton_Click" />
+            <Button Background="#A78BFA" Tag="#A78BFA" Click="SwatchButton_Click" />
+            <Button Background="#FBBF24" Tag="#FBBF24" Click="SwatchButton_Click" />
+            <Button Background="#34D399" Tag="#34D399" Click="SwatchButton_Click" />
+            <Button Background="#22D3EE" Tag="#22D3EE" Click="SwatchButton_Click" />
+            <Button Background="#F472B6" Tag="#F472B6" Click="SwatchButton_Click" />
+            <Button Background="#111827" Tag="#111827" Click="SwatchButton_Click" />
+            <Button Background="#374151" Tag="#374151" Click="SwatchButton_Click" />
+            <Button Background="#7C3AED" Tag="#7C3AED" Click="SwatchButton_Click" />
+            <Button Background="#DC2626" Tag="#DC2626" Click="SwatchButton_Click" />
+        </UniformGrid>
+
+        <StackPanel Grid.Row="2">
+            <DockPanel Margin="0,0,0,10">
+                <TextBlock Text="R" Width="24" VerticalAlignment="Center" />
+                <TextBlock x:Name="RedValueTextBlock" Width="38" VerticalAlignment="Center" />
+                <Slider x:Name="RedSlider"
+                        Minimum="0"
+                        Maximum="255"
+                        TickFrequency="1"
+                        ValueChanged="Slider_ValueChanged" />
+            </DockPanel>
+            <DockPanel Margin="0,0,0,10">
+                <TextBlock Text="G" Width="24" VerticalAlignment="Center" />
+                <TextBlock x:Name="GreenValueTextBlock" Width="38" VerticalAlignment="Center" />
+                <Slider x:Name="GreenSlider"
+                        Minimum="0"
+                        Maximum="255"
+                        TickFrequency="1"
+                        ValueChanged="Slider_ValueChanged" />
+            </DockPanel>
+            <DockPanel Margin="0,0,0,10">
+                <TextBlock Text="B" Width="24" VerticalAlignment="Center" />
+                <TextBlock x:Name="BlueValueTextBlock" Width="38" VerticalAlignment="Center" />
+                <Slider x:Name="BlueSlider"
+                        Minimum="0"
+                        Maximum="255"
+                        TickFrequency="1"
+                        ValueChanged="Slider_ValueChanged" />
+            </DockPanel>
+            <DockPanel>
+                <TextBlock Text="HEX"
+                           Width="62"
+                           VerticalAlignment="Center" />
+                <TextBox x:Name="HexTextBox"
+                         TextChanged="HexTextBox_TextChanged" />
+            </DockPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0">
+            <Button Content="取消"
+                    Click="CancelButton_Click" />
+            <Button Content="确定"
+                    Background="#2563EB"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Click="OkButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

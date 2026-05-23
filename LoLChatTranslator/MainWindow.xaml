@@ -1,0 +1,298 @@
+<Window x:Class="LoLChatTranslator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="LOL Chat OCR Translator"
+        Icon="Assets/AppIcon.ico"
+        Height="1000"
+        Width="1200"
+        MinHeight="720"
+        MinWidth="960"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F6F8">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="MainCommandButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Width" Value="148" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="BorderBrush" Value="#D1D5DB" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="6,3" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="LOL Chat OCR Translator"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock x:Name="AppSubtitleTextBlock"
+                           Text="安全的屏幕截图 OCR 聊天翻译辅助工具"
+                           Margin="0,4,0,0"
+                           Foreground="{StaticResource MutedTextBrush}" />
+            </StackPanel>
+
+            <Grid Grid.Column="1"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Top">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="RestartTranslateButton"
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Content="重启翻译"
+                        Background="#D97706"
+                        Click="RestartTranslateButton_Click" />
+                <Button x:Name="TestOcrButton"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Content="测试 OCR"
+                        Background="#7C3AED"
+                        Click="TestOcrButton_Click" />
+                <Button x:Name="SettingsButton"
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Content="设置"
+                        Background="#374151"
+                        Margin="0"
+                        Click="SettingsButton_Click" />
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="1"
+              Margin="0,0,0,10"
+              HorizontalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="156" />
+                <ColumnDefinition Width="156" />
+                <ColumnDefinition Width="156" />
+                <ColumnDefinition Width="156" />
+                <ColumnDefinition Width="156" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button x:Name="StartAutoButton"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Content="开始自动翻译"
+                    Style="{StaticResource MainCommandButtonStyle}"
+                    Click="StartAutoButton_Click" />
+            <Button x:Name="StopAutoButton"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Content="停止自动翻译"
+                    Style="{StaticResource MainCommandButtonStyle}"
+                    Background="#4B5563"
+                    Click="StopAutoButton_Click" />
+            <Button x:Name="ManualRecognizeButton"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Content="手动识别一次"
+                    Style="{StaticResource MainCommandButtonStyle}"
+                    Background="#059669"
+                    Click="ManualRecognizeButton_Click" />
+            <Button x:Name="ReselectRegionButton"
+                    Grid.Row="0"
+                    Grid.Column="3"
+                    Content="重新框选聊天区域"
+                    Style="{StaticResource MainCommandButtonStyle}"
+                    Background="#0891B2"
+                    Click="ReselectRegionButton_Click" />
+            <Button x:Name="ViewCurrentRegionButton"
+                    Grid.Row="0"
+                    Grid.Column="4"
+                    Content="查看当前框选范围"
+                    Style="{StaticResource MainCommandButtonStyle}"
+                    Background="#0F766E"
+                    Click="ViewCurrentRegionButton_Click" />
+            <Button x:Name="ToggleOverlayVisibilityButton"
+                    Grid.Row="0"
+                    Grid.Column="6"
+                    Content="隐藏悬浮窗"
+                    Style="{StaticResource MainCommandButtonStyle}"
+                    Background="#4B5563"
+                    Margin="0,0,0,8"
+                    HorizontalAlignment="Right"
+                    Click="ToggleOverlayVisibilityButton_Click" />
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="18">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock x:Name="StatusHeaderTextBlock"
+                                   Text="运行状态"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <TextBlock x:Name="OcrTimingTextBlock"
+                                   Text="-"
+                                   Margin="14,2,0,0"
+                                   HorizontalAlignment="Right"
+                                   DockPanel.Dock="Right"
+                                   FontFamily="Consolas"
+                                   FontSize="12"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+                    </DockPanel>
+                    <TextBlock x:Name="StatusText"
+                               Margin="0,12,0,0"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock x:Name="RealtimeOcrHeaderTextBlock"
+                               Text="实时 OCR 状态"
+                               Margin="0,18,0,6"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBox x:Name="RealtimeOcrStatusTextBox"
+                             MinHeight="118"
+                             IsReadOnly="True"
+                             TextWrapping="Wrap"
+                             FontFamily="Consolas"
+                             FontSize="12"
+                             VerticalScrollBarVisibility="Auto"
+                             Background="#F9FAFB" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock x:Name="ReplyHeaderTextBlock"
+                                   Text="回复翻译到剪贴板"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <TextBlock x:Name="ReplyNoticeTextBlock"
+                                   Text="翻译结果只复制到剪贴板，由你手动回游戏粘贴发送。"
+                                   Margin="0,4,0,0"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+                    </StackPanel>
+
+                    <TextBox x:Name="ReplyInputTextBox"
+                             Grid.Row="1"
+                             MinHeight="170"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto" />
+
+                    <DockPanel Grid.Row="2" Margin="0,12,0,0">
+                        <TextBlock x:Name="ReplyTargetLanguageTextBlock"
+                                   Text="目标语言"
+                                   Width="76"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <ComboBox x:Name="ReplyTargetLanguageComboBox"
+                                  Width="180"
+                                  HorizontalAlignment="Left">
+                            <ComboBoxItem Content="简体中文" Tag="zh-Hans" />
+                            <ComboBoxItem Content="繁體中文" Tag="zh-Hant" />
+                            <ComboBoxItem Content="English" Tag="en" />
+                            <ComboBoxItem Content="한국어" Tag="ko" />
+                            <ComboBoxItem Content="Tiếng Việt" Tag="vi" />
+                            <ComboBoxItem Content="日本語" Tag="ja" />
+                        </ComboBox>
+                    </DockPanel>
+
+                    <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                        <TextBlock x:Name="ReplyOutputPreviewTextBlock"
+                                   Text="输出预览"
+                                   Margin="0,0,0,6"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <TextBox x:Name="ReplyOutputTextBox"
+                                 MinHeight="78"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Background="#F9FAFB" />
+                    </StackPanel>
+
+                    <DockPanel Grid.Row="4" Margin="0,14,0,0">
+                        <Button x:Name="TranslateReplyButton"
+                                Content="翻译并复制"
+                                Click="TranslateReplyButton_Click" />
+                        <TextBlock x:Name="ClipboardStatusText"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Foreground="#059669" />
+                    </DockPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
