@@ -87,13 +87,6 @@ LOL Chat OCR Translator 是一个 Windows 桌面工具，用来辅助理解和�
 
 快捷键可在设置中重新配置或清空。
 
-### 7. 安装、更新与环境管理
-
-- 提供 WinForms 安装器，可自定义安装目录并创建桌面快捷方式。
-- 安装器会注册 Windows 卸载项，方便从系统设置中卸载。
-- 关于页面支持检查 GitHub Releases 最新版本。
-- 可在程序内删除项目专用 PP-OCRv5 OCR 环境，不影响用户自己的 Python。
-
 ## 特色功能
 
 ### LOL 语境优化
