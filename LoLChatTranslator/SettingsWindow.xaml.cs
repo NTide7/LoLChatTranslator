@@ -1453,55 +1453,63 @@ public partial class SettingsWindow : Window
             var detailedProgress = new Progress<OcrDependencyInstallProgress>(AppendOcrInstallProgress);
 
             var result = await _ocrDependencyInstaller.InstallAllAsync(_config.OcrConfig, progress, detailedProgress: detailedProgress);
+            if (!result.Succeeded)
+            {
+                result = await RetryOcrDependencyInstallAfterFailureAsync(result, progress, detailedProgress);
+            }
+
             OcrDependencyStatusTextBlock.Foreground = result.Succeeded
                 ? System.Windows.Media.Brushes.SeaGreen
                 : System.Windows.Media.Brushes.Firebrick;
             OcrDependencyStatusTextBlock.Text = result.Message;
             MarkOcrDependenciesInstalledIfSucceeded(result);
-
-            if (!result.Succeeded && result.RequiresElevation)
-            {
-                var retry = MessageBox.Show(
-                    this,
-                    UiTextLocalizer.Text(
-                        _config.UiLanguage,
-                        "当前权限不足。项目 PP-OCRv5 OCR 环境会安装到上方选择的位置；请选择当前用户可写目录后重试。是否重试检测 OCR 环境？",
-                        "目前權限不足。專案 PP-OCRv5 OCR 環境會安裝到上方選擇的位置；請選擇目前使用者可寫入的資料夾後重試。是否重試偵測 OCR 環境？",
-                        "Permission is insufficient. The PP-OCRv5 OCR environment is installed in the selected location; choose a folder writable by the current user and retry. Retry the OCR environment check?",
-                        "권한이 부족합니다. PP-OCRv5 OCR 환경은 위에서 선택한 위치에 설치됩니다. 현재 사용자가 쓸 수 있는 폴더를 선택한 뒤 다시 시도하세요. OCR 환경 확인을 다시 시도할까요?",
-                        "権限が不足しています。PP-OCRv5 OCR 環境は上で選んだ場所にインストールされます。現在のユーザーが書き込めるフォルダーを選んで再試行してください。OCR 環境確認を再試行しますか？",
-                        "Không đủ quyền. Môi trường OCR PP-OCRv5 sẽ được cài vào vị trí đã chọn; hãy chọn thư mục mà người dùng hiện tại có quyền ghi rồi thử lại. Thử kiểm tra lại môi trường OCR?"),
-                    UiTextLocalizer.Text(_config.UiLanguage, "PP-OCRv5 OCR 环境安装失败", "PP-OCRv5 OCR 環境安裝失敗", "PP-OCRv5 OCR Environment Install Failed", "PP-OCRv5 OCR 환경 설치 실패", "PP-OCRv5 OCR 環境のインストール失敗", "Cài môi trường OCR PP-OCRv5 thất bại"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-
-                if (retry == MessageBoxResult.Yes)
-                {
-                    OcrDependencyStatusTextBlock.Foreground = System.Windows.Media.Brushes.DimGray;
-                    OcrDependencyStatusTextBlock.Text = UiTextLocalizer.Text(
-                        _config.UiLanguage,
-                        "正在重试检测 PP-OCRv5 OCR 环境...",
-                        "正在重試偵測 PP-OCRv5 OCR 環境...",
-                        "Retrying PP-OCRv5 OCR environment check...",
-                        "PP-OCRv5 OCR 환경 확인 재시도 중...",
-                        "PP-OCRv5 OCR 環境確認を再試行中...",
-                        "Đang thử kiểm tra lại môi trường OCR PP-OCRv5...");
-
-                    BeginOcrInstallProgress();
-                    var retryResult = await _ocrDependencyInstaller.InstallAllAsync(_config.OcrConfig, progress, detailedProgress: detailedProgress);
-                    OcrDependencyStatusTextBlock.Foreground = retryResult.Succeeded
-                        ? System.Windows.Media.Brushes.SeaGreen
-                        : System.Windows.Media.Brushes.Firebrick;
-                    OcrDependencyStatusTextBlock.Text = retryResult.Message;
-                    MarkOcrDependenciesInstalledIfSucceeded(retryResult);
-                }
-            }
         }
         finally
         {
             EndOcrInstallProgress();
             InstallOcrDependenciesButton.IsEnabled = true;
         }
+    }
+
+    private async Task<OcrDependencyInstallResult> RetryOcrDependencyInstallAfterFailureAsync(
+        OcrDependencyInstallResult result,
+        IProgress<string> progress,
+        IProgress<OcrDependencyInstallProgress> detailedProgress)
+    {
+        var currentDirectory = PythonEnvironmentService.ResolveOcrEnvironmentDirectory(_config.OcrConfig);
+        var selectedDirectory = OcrEnvironmentInstallRecovery.PromptForAlternativeDirectory(
+            this,
+            _config.UiLanguage,
+            currentDirectory,
+            result.Message);
+
+        if (!string.IsNullOrWhiteSpace(selectedDirectory))
+        {
+            OcrEnvironmentDirectoryTextBox.Text = selectedDirectory;
+            _config.OcrConfig.OcrEnvironmentDirectory = selectedDirectory;
+            _config.HasCompletedOcrEnvironmentSetup = false;
+            _configService.Save(_config);
+            ConfigSaved?.Invoke(this, EventArgs.Empty);
+            OcrDependencyStatusTextBlock.Foreground = System.Windows.Media.Brushes.DimGray;
+            OcrDependencyStatusTextBlock.Text = UiTextLocalizer.Text(
+                _config.UiLanguage,
+                "正在使用新的 OCR 环境位置重试检测/安装...",
+                "正在使用新的 OCR 環境位置重試偵測/安裝...",
+                "Retrying OCR environment check/install with the new location...",
+                "새 OCR 환경 위치로 확인/설치를 다시 시도하는 중...",
+                "新しい OCR 環境の場所で確認/インストールを再試行しています...",
+                "Đang thử kiểm tra/cài lại với vị trí OCR mới...");
+            AppendOcrInstallConsoleLine($"[{DateTime.Now:HH:mm:ss}] Retrying with OCR environment directory: {selectedDirectory}");
+
+            result = await _ocrDependencyInstaller.InstallAllAsync(_config.OcrConfig, progress, detailedProgress: detailedProgress);
+        }
+
+        if (!result.Succeeded && OcrEnvironmentInstallRecovery.ShouldOfferAdministratorRestart(result))
+        {
+            OcrEnvironmentInstallRecovery.PromptRestartAsAdministrator(this, _config.UiLanguage, result.Message);
+        }
+
+        return result;
     }
 
     private void MarkOcrDependenciesInstalledIfSucceeded(OcrDependencyInstallResult result)

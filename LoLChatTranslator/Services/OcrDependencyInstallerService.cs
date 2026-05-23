@@ -69,7 +69,8 @@ public sealed class OcrDependencyInstallerService
         {
             var message = ex is OperationCanceledException ? "OCR 环境安装已取消。" : ex.Message;
             Report(progress, detailedProgress, 100, message, $"ERROR: {message}");
-            return new OcrDependencyInstallResult(false, $"{message}{Environment.NewLine}{log}");
+            var details = $"{message}{Environment.NewLine}{log}";
+            return new OcrDependencyInstallResult(false, details, IsPermissionFailure(ex) || OcrEnvironmentInstallRecovery.LooksLikePermissionFailure(details));
         }
     }
 
@@ -828,6 +829,29 @@ public sealed class OcrDependencyInstallerService
         }
 
         return new OcrDependencyInstallResult(true, message.ToString().Trim());
+    }
+
+    private static bool IsPermissionFailure(Exception ex)
+    {
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            if (current is UnauthorizedAccessException)
+            {
+                return true;
+            }
+
+            if (current is Win32Exception { NativeErrorCode: 5 })
+            {
+                return true;
+            }
+
+            if (OcrEnvironmentInstallRecovery.LooksLikePermissionFailure(current.Message))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static string BuildPaddlePaddleFailureMessage(string details)

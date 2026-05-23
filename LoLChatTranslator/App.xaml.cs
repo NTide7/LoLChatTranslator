@@ -24,7 +24,9 @@ public partial class App : Application
             return;
         }
 
-        new MainWindow().Show();
+        var installOcrDependenciesOnStartup = e.Args.Any(arg =>
+            arg.Equals("--install-ocr-deps", StringComparison.OrdinalIgnoreCase));
+        new MainWindow(installOcrDependenciesOnStartup).Show();
     }
 
     protected override void OnExit(ExitEventArgs e)

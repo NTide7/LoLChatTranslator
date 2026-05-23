@@ -18,6 +18,10 @@ public partial class MainWindow : Window
     private const int AutoOcrMinimumTimeoutMs = 8000;
     private const int AutoOcrColdStartTimeoutMs = 30000;
     private const int CaptureHideDelayMs = 60;
+    private const double PreferredStartupWidth = 1040;
+    private const double PreferredStartupHeight = 760;
+    private const double MinimumStartupWidth = 760;
+    private const double MinimumStartupHeight = 520;
     private static readonly TimeSpan SelfOcrIgnoreTtl = TimeSpan.FromSeconds(25);
 
     private readonly ConfigService _configService = new();
@@ -47,6 +51,7 @@ public partial class MainWindow : Window
     private SettingsWindow? _settingsWindow;
     private LastTranslationEvent? _lastTranslationEvent;
     private string? _selfPlayerName;
+    private readonly bool _installOcrDependenciesOnStartup;
     private Task? _autoTranslateTask;
     private bool _isAutoTranslating;
     private bool _closeRequested;
@@ -62,10 +67,12 @@ public partial class MainWindow : Window
     private string? _lastAutoCaptureHash;
     private string _lastOcrCycleCommitReason = "failed_not_committed";
 
-    public MainWindow()
+    public MainWindow(bool installOcrDependenciesOnStartup = false)
     {
         InitializeComponent();
+        ConfigureInitialWindowSize();
 
+        _installOcrDependenciesOnStartup = installOcrDependenciesOnStartup;
         _channelAliasService = new ChannelAliasService();
         _chatCleaner = new ChatCleaner(_channelAliasService);
         _chatDeduper = new ChatDeduper(_channelAliasService);
@@ -77,6 +84,22 @@ public partial class MainWindow : Window
         _overlayWindow.InputSubmitted += TranslateOverlayInputAsync;
 
         Loaded += MainWindow_Loaded;
+    }
+
+    private void ConfigureInitialWindowSize()
+    {
+        var workArea = SystemParameters.WorkArea;
+        if (workArea.Width <= 0 || workArea.Height <= 0)
+        {
+            return;
+        }
+
+        var maxStartupWidth = Math.Max(320, workArea.Width * 0.92);
+        var maxStartupHeight = Math.Max(320, workArea.Height * 0.90);
+        MinWidth = Math.Min(MinWidth, Math.Min(MinimumStartupWidth, maxStartupWidth));
+        MinHeight = Math.Min(MinHeight, Math.Min(MinimumStartupHeight, maxStartupHeight));
+        Width = Math.Clamp(PreferredStartupWidth, MinWidth, maxStartupWidth);
+        Height = Math.Clamp(PreferredStartupHeight, MinHeight, maxStartupHeight);
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -94,7 +117,16 @@ public partial class MainWindow : Window
         DiagnosticSnapshotService.WriteStartupSnapshot(_config, _diagnosticSessionId);
         ScheduleOcrWarmUp("startup", delayMs: 2000);
         ShowDevelopmentNoticeOnce();
-        ShowOcrEnvironmentSetupPromptOnce();
+        if (_installOcrDependenciesOnStartup)
+        {
+            _config.HasShownOcrEnvironmentSetupPrompt = true;
+            _configService.Save(_config);
+            TryBeginInvoke(async () => await InstallOcrDependenciesFromMainAsync("elevated_startup"));
+        }
+        else
+        {
+            ShowOcrEnvironmentSetupPromptOnce();
+        }
     }
 
     private void StartAutoButton_Click(object sender, RoutedEventArgs e)
@@ -613,6 +645,10 @@ public partial class MainWindow : Window
                 progress,
                 CancellationToken.None,
                 detailedProgress);
+            if (!result.Succeeded)
+            {
+                result = await RetryOcrDependencyInstallAfterFailureAsync(result, progress, detailedProgress, source);
+            }
 
             if (result.Succeeded)
             {
@@ -639,6 +675,42 @@ public partial class MainWindow : Window
             UpdateOcrEnvironmentSetupButtonVisibility();
             UpdateAutoButtons();
         }
+    }
+
+    private async Task<OcrDependencyInstallResult> RetryOcrDependencyInstallAfterFailureAsync(
+        OcrDependencyInstallResult result,
+        IProgress<string> progress,
+        IProgress<OcrDependencyInstallProgress> detailedProgress,
+        string source)
+    {
+        var currentDirectory = PythonEnvironmentService.ResolveOcrEnvironmentDirectory(_config.OcrConfig);
+        var selectedDirectory = OcrEnvironmentInstallRecovery.PromptForAlternativeDirectory(
+            this,
+            _config.UiLanguage,
+            currentDirectory,
+            result.Message);
+
+        if (!string.IsNullOrWhiteSpace(selectedDirectory))
+        {
+            _config.OcrConfig.OcrEnvironmentDirectory = selectedDirectory;
+            _config.HasCompletedOcrEnvironmentSetup = false;
+            _configService.Save(_config);
+            AddRealtimeDebugLog($"ocr_dependency_install_retry source={source} changed_environment_directory=true");
+            SetStatus($"正在使用新的 OCR 环境位置重试：{selectedDirectory}");
+
+            result = await _ocrDependencyInstaller.InstallAllAsync(
+                _config.OcrConfig,
+                progress,
+                CancellationToken.None,
+                detailedProgress);
+        }
+
+        if (!result.Succeeded && OcrEnvironmentInstallRecovery.ShouldOfferAdministratorRestart(result))
+        {
+            OcrEnvironmentInstallRecovery.PromptRestartAsAdministrator(this, _config.UiLanguage, result.Message);
+        }
+
+        return result;
     }
 
     private async Task TestOcrAsync()
