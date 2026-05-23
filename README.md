@@ -264,4 +264,12 @@ LoLChatTranslator/
 
 ## License
 
-本项目基于 MIT License 开源。详情请查看 [LICENSE](LICENSE) 文件。
+本项目基于 GNU General Public License v3.0（GPL-3.0）开源。
+
+你可以在 GPL-3.0 许可证允许的范围内自由使用、学习、修改和分发本软件。
+
+如果你发布了基于本项目修改后的版本，或发布了基于本项目的衍生作品，则必须同时公开对应的源代码，并继续使用 GPL-3.0 许可证发布。
+
+本许可证不允许将本项目的修改版闭源后再分发。
+
+详情请查看 [LICENSE](LICENSE) 文件。
