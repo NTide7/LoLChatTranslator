@@ -264,4 +264,4 @@ The project is still in development. OCR speed, recognition accuracy, unusual re
 
 ## License
 
-No LICENSE file is included in the current source package. Please add an explicit license before public distribution or external reuse.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
