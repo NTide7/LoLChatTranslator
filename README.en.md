@@ -264,4 +264,12 @@ The project is still in development. OCR speed, recognition accuracy, unusual re
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0.
+
+You are free to use, study, modify, and distribute this software under the terms of the GPL-3.0 license.
+
+If you distribute a modified version or a derivative work based on this project, you must also make the corresponding source code available under the same GPL-3.0 license.
+
+Closed-source redistribution of modified versions is not permitted under this license.
+
+See the [LICENSE](LICENSE) file for details.
