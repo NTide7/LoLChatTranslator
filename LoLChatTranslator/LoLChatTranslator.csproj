@@ -14,10 +14,10 @@
     <Description>Safe screenshot OCR chat translation helper for League of Legends.</Description>
     <Company>LoLChatTranslator</Company>
     <Authors>LoLChatTranslator</Authors>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <InformationalVersion>1.0.0</InformationalVersion>
+    <Version>1.0.1-dev</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <InformationalVersion>1.0.1-dev</InformationalVersion>
     <SatelliteResourceLanguages>zh-Hans;zh-Hant;ja;ko;vi</SatelliteResourceLanguages>
     <PublishReadyToRun>false</PublishReadyToRun>
     <PublishTrimmed>false</PublishTrimmed>

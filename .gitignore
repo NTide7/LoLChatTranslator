@@ -431,3 +431,9 @@ FodyWeavers.xsd
 # Local packaging outputs
 download/
 artifacts/
+
+# Installer packaging outputs
+Installer/dist/
+Installer/payload/
+Installer/framework-dependent/
+Installer/LoLChatTranslatorInstaller/Payload.zip

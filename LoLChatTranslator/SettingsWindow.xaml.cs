@@ -1365,12 +1365,32 @@ public partial class SettingsWindow : Window
 
     private void ReselectRegionButton_Click(object sender, RoutedEventArgs e)
     {
-        var selector = new RegionSelectorWindow(_config.UiLanguage)
+        RegionSelectorWindow selector;
+        try
         {
-            Owner = this
-        };
+            selector = new RegionSelectorWindow(_config.UiLanguage)
+            {
+                Owner = this
+            };
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "框选窗口打开失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
 
-        if (selector.ShowDialog() == true && selector.SelectedRegion is { } region)
+        bool? dialogResult;
+        try
+        {
+            dialogResult = selector.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "框选窗口显示失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (dialogResult == true && selector.SelectedRegion is { } region)
         {
             _config.OcrConfig.RegionX = region.X;
             _config.OcrConfig.RegionY = region.Y;

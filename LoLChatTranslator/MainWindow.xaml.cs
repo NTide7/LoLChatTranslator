@@ -48,7 +48,9 @@ public partial class MainWindow : Window
     private string? _selfPlayerName;
     private Task? _autoTranslateTask;
     private bool _isAutoTranslating;
-    private bool _closingAfterAutoStop;
+    private bool _closeRequested;
+    private bool _closeReady;
+    private bool _closeCleanupCompleted;
     private DateTimeOffset _lastAutoOcrRunAt = DateTimeOffset.MinValue;
     private DateTimeOffset _lastAutoFullOcrRunAt = DateTimeOffset.MinValue;
     private int _autoOcrInFlight;
@@ -2458,12 +2460,38 @@ public partial class MainWindow : Window
 
     private void ReselectRegion()
     {
-        var selector = new RegionSelectorWindow(_config.UiLanguage)
+        RegionSelectorWindow selector;
+        try
         {
-            Owner = this
-        };
+            selector = new RegionSelectorWindow(_config.UiLanguage)
+            {
+                Owner = this
+            };
+        }
+        catch (Exception ex)
+        {
+            AppLogService.AppendText(
+                "app-errors.log",
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} region_selector_create_failed {ex}{Environment.NewLine}");
+            SetStatus($"框选窗口打开失败：{ex.Message}");
+            return;
+        }
 
-        if (selector.ShowDialog() == true && selector.SelectedRegion is { } region)
+        bool? dialogResult;
+        try
+        {
+            dialogResult = selector.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            AppLogService.AppendText(
+                "app-errors.log",
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} region_selector_show_failed {ex}{Environment.NewLine}");
+            SetStatus($"框选窗口显示失败：{ex.Message}");
+            return;
+        }
+
+        if (dialogResult == true && selector.SelectedRegion is { } region)
         {
             _config.OcrConfig.RegionX = region.X;
             _config.OcrConfig.RegionY = region.Y;
@@ -3360,18 +3388,29 @@ public partial class MainWindow : Window
         }
     }
 
-    protected override async void OnClosing(CancelEventArgs e)
+    protected override void OnClosing(CancelEventArgs e)
     {
-        if (!_closingAfterAutoStop)
+        if (!_closeReady)
         {
             e.Cancel = true;
-            _closingAfterAutoStop = true;
+            if (_closeRequested)
+            {
+                return;
+            }
+
+            _closeRequested = true;
             IsEnabled = false;
-            await StopAutoTranslateAsync("window_closing", TimeSpan.FromSeconds(10));
-            Close();
+            _ = CompleteCloseAsync();
             return;
         }
 
+        if (_closeCleanupCompleted)
+        {
+            base.OnClosing(e);
+            return;
+        }
+
+        _closeCleanupCompleted = true;
         _ocrTextMaskTrigger.Dispose();
         _ocrService.Dispose();
         _autoOcrCoordinator.Dispose();
@@ -3383,6 +3422,33 @@ public partial class MainWindow : Window
         _overlayWindow.Close();
 
         base.OnClosing(e);
+    }
+
+    private async Task CompleteCloseAsync()
+    {
+        try
+        {
+            await StopAutoTranslateAsync("window_closing", TimeSpan.FromSeconds(10));
+        }
+        catch (Exception ex)
+        {
+            AppLogService.AppendText(
+                "app-errors.log",
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} close_stop_failed {ex}{Environment.NewLine}");
+        }
+        finally
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                if (_closeReady)
+                {
+                    return;
+                }
+
+                _closeReady = true;
+                Close();
+            }, DispatcherPriority.Background);
+        }
     }
 
     private const int GwlExStyle = -20;

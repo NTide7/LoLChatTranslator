@@ -49,7 +49,7 @@ public sealed class GitHubUpdateService
             Timeout = TimeSpan.FromSeconds(12)
         };
 
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("LOL-Chat-OCR-Translator/1.0.0");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("LOL-Chat-OCR-Translator/1.0.1-dev");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return client;
     }

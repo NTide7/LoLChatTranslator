@@ -8,7 +8,7 @@ $frameworkDependentDir = Join-Path $PSScriptRoot "framework-dependent"
 $installerProjectDir = Join-Path $PSScriptRoot "LoLChatTranslatorInstaller"
 $payloadZip = Join-Path $installerProjectDir "Payload.zip"
 $outputDir = Join-Path $PSScriptRoot "dist"
-$frameworkDependentZip = Join-Path $outputDir "LoLChatTranslator_FrameworkDependent_1.0.0_win-x64.zip"
+$frameworkDependentZip = Join-Path $outputDir "LoLChatTranslator_FrameworkDependent_1.0.1-dev_win-x64.zip"
 
 if (Test-Path $payloadDir) {
     Remove-Item -LiteralPath $payloadDir -Recurse -Force
@@ -66,7 +66,7 @@ dotnet publish $installerProject `
 
 Get-ChildItem -Path $outputDir -Recurse -Filter *.pdb | Remove-Item -Force
 $sourceExe = Join-Path $outputDir "LoLChatTranslatorSetup.exe"
-$finalExe = Join-Path $outputDir "LoLChatTranslator_Setup_1.0.0.exe"
+$finalExe = Join-Path $outputDir "LoLChatTranslator_Setup_1.0.1-dev.exe"
 if (Test-Path $sourceExe) {
     Move-Item -LiteralPath $sourceExe -Destination $finalExe -Force
 }

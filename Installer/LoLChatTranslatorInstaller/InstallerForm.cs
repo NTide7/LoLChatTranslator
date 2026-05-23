@@ -12,7 +12,7 @@ public sealed class InstallerForm : Form
     private const string AppFolderName = "LoLChatTranslator";
     private const string AppExeName = "LoLChatTranslator.exe";
     private const string AppDisplayName = "LOL Chat OCR Translator";
-    private const string AppVersion = "1.0.0";
+    private const string AppVersion = "1.0.1-dev";
     private const string AppPublisher = "NTide7";
     private const string AppProjectUrl = "https://github.com/NTide7/LoLChatTranslator";
     private const string PayloadResourceName = "Payload.zip";
