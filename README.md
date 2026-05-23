@@ -1,4 +1,4 @@
-# LOL Chat OCR Translator
+# LOL Chat OCR Translator (DEV)
 
 [English](README.en.md) | 简体中文
 
