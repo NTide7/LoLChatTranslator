@@ -264,4 +264,4 @@ LoLChatTranslator/
 
 ## License
 
-当前源码包中尚未包含 LICENSE 文件。公开发布前建议补充明确许可证。
+本项目基于 MIT License 开源。详情请查看 [LICENSE](LICENSE) 文件。
