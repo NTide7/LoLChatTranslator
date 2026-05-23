@@ -14,6 +14,10 @@ public sealed class AppConfig
 
     public bool HasShownDevelopmentNotice { get; set; } = false;
 
+    public bool HasShownOcrEnvironmentSetupPrompt { get; set; } = false;
+
+    public bool HasCompletedOcrEnvironmentSetup { get; set; } = false;
+
     [JsonPropertyName("OCRConfig")]
     public OcrConfig OcrConfig { get; set; } = new();
 

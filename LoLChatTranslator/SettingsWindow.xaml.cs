@@ -36,6 +36,8 @@ public partial class SettingsWindow : Window
 
     public event EventHandler? ConfigSaved;
 
+    public event EventHandler? OcrDependenciesInstalled;
+
     public event Action<AppConfig>? ConfigPreviewChanged;
 
     private void LoadConfigToControls()
@@ -1455,6 +1457,7 @@ public partial class SettingsWindow : Window
                 ? System.Windows.Media.Brushes.SeaGreen
                 : System.Windows.Media.Brushes.Firebrick;
             OcrDependencyStatusTextBlock.Text = result.Message;
+            MarkOcrDependenciesInstalledIfSucceeded(result);
 
             if (!result.Succeeded && result.RequiresElevation)
             {
@@ -1490,6 +1493,7 @@ public partial class SettingsWindow : Window
                         ? System.Windows.Media.Brushes.SeaGreen
                         : System.Windows.Media.Brushes.Firebrick;
                     OcrDependencyStatusTextBlock.Text = retryResult.Message;
+                    MarkOcrDependenciesInstalledIfSucceeded(retryResult);
                 }
             }
         }
@@ -1498,6 +1502,19 @@ public partial class SettingsWindow : Window
             EndOcrInstallProgress();
             InstallOcrDependenciesButton.IsEnabled = true;
         }
+    }
+
+    private void MarkOcrDependenciesInstalledIfSucceeded(OcrDependencyInstallResult result)
+    {
+        if (!result.Succeeded)
+        {
+            return;
+        }
+
+        _config.HasCompletedOcrEnvironmentSetup = true;
+        _configService.Save(_config);
+        ConfigSaved?.Invoke(this, EventArgs.Empty);
+        OcrDependenciesInstalled?.Invoke(this, EventArgs.Empty);
     }
 
     private void BeginOcrInstallProgress()

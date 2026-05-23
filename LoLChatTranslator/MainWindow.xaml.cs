@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private readonly ConfigService _configService = new();
     private readonly ChampionAliasService _championAliasService = new();
     private readonly OcrService _ocrService = new();
+    private readonly OcrDependencyInstallerService _ocrDependencyInstaller = new();
     private readonly ChannelAliasService _channelAliasService;
     private readonly ChatCleaner _chatCleaner;
     private readonly ChatDeduper _chatDeduper;
@@ -51,6 +52,7 @@ public partial class MainWindow : Window
     private bool _closeRequested;
     private bool _closeReady;
     private bool _closeCleanupCompleted;
+    private bool _isOcrDependencyInstallRunning;
     private DateTimeOffset _lastAutoOcrRunAt = DateTimeOffset.MinValue;
     private DateTimeOffset _lastAutoFullOcrRunAt = DateTimeOffset.MinValue;
     private int _autoOcrInFlight;
@@ -86,11 +88,13 @@ public partial class MainWindow : Window
         UpdateOverlayInputTargetStatus();
         RegisterHotkeys();
         UpdateAutoButtons();
+        UpdateOcrEnvironmentSetupButtonVisibility();
         UpdateRealtimeOcrDebug(state => state.RunningStatus = "stopped");
         SetStatus(T("StatusReady"));
         DiagnosticSnapshotService.WriteStartupSnapshot(_config, _diagnosticSessionId);
         ScheduleOcrWarmUp("startup", delayMs: 2000);
         ShowDevelopmentNoticeOnce();
+        ShowOcrEnvironmentSetupPromptOnce();
     }
 
     private void StartAutoButton_Click(object sender, RoutedEventArgs e)
@@ -111,6 +115,11 @@ public partial class MainWindow : Window
     private async void RestartTranslateButton_Click(object sender, RoutedEventArgs e)
     {
         await RestartTranslateAsync();
+    }
+
+    private async void InstallOcrDependenciesMainButton_Click(object sender, RoutedEventArgs e)
+    {
+        await InstallOcrDependenciesFromMainAsync("main_button");
     }
 
     private async void TestOcrButton_Click(object sender, RoutedEventArgs e)
@@ -556,6 +565,79 @@ public partial class MainWindow : Window
         {
             ManualRecognizeButton.IsEnabled = true;
             RestartTranslateButton.IsEnabled = true;
+        }
+    }
+
+    private async Task InstallOcrDependenciesFromMainAsync(string source)
+    {
+        if (_isOcrDependencyInstallRunning)
+        {
+            return;
+        }
+
+        _isOcrDependencyInstallRunning = true;
+        InstallOcrDependenciesMainButton.IsEnabled = false;
+        InstallOcrDependenciesMainButton.Content = T("OcrEnvironmentInstalling");
+        UpdateAutoButtons();
+        AddRealtimeDebugLog($"ocr_dependency_install_started source={source}");
+        SetStatus(T("OcrEnvironmentPreparing"));
+
+        try
+        {
+            await StopAutoTranslateAsync("ocr_dependency_install", TimeSpan.FromSeconds(10));
+            ResetAutoOcrWorkerState("ocr_dependency_install", resetWorkers: true);
+
+            var progress = new Progress<string>(message =>
+            {
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    SetStatus(message);
+                }
+            });
+            var detailedProgress = new Progress<OcrDependencyInstallProgress>(progressItem =>
+            {
+                if (progressItem.Percent >= 0 && !string.IsNullOrWhiteSpace(progressItem.Message))
+                {
+                    AddRealtimeDebugLog(
+                        $"ocr_dependency_install progress={progressItem.Percent} message=\"{CleanLog(progressItem.Message)}\"");
+                }
+
+                if (_config.EnableVerboseDiagnostics && !string.IsNullOrWhiteSpace(progressItem.Detail))
+                {
+                    AddRealtimeDebugLog($"ocr_dependency_install detail=\"{CleanLog(progressItem.Detail)}\"");
+                }
+            });
+
+            var result = await _ocrDependencyInstaller.InstallAllAsync(
+                _config.OcrConfig,
+                progress,
+                CancellationToken.None,
+                detailedProgress);
+
+            if (result.Succeeded)
+            {
+                MarkOcrEnvironmentSetupCompleted(source);
+                SetStatus(T("OcrEnvironmentReady"));
+                AddRealtimeDebugLog($"ocr_dependency_install_completed source={source}");
+                ScheduleOcrWarmUp("ocr_dependencies_installed", delayMs: 250);
+                return;
+            }
+
+            SetStatus(T("OcrEnvironmentInstallFailedShort"));
+            AddRealtimeDebugLog($"ocr_dependency_install_failed source={source} error=\"{CleanLog(result.Message)}\"");
+            MessageBox.Show(
+                this,
+                result.Message,
+                T("OcrEnvironmentInstallFailedTitle"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+        finally
+        {
+            _isOcrDependencyInstallRunning = false;
+            InstallOcrDependenciesMainButton.Content = T("OcrEnvironmentSetupButton");
+            UpdateOcrEnvironmentSetupButtonVisibility();
+            UpdateAutoButtons();
         }
     }
 
@@ -2244,6 +2326,11 @@ public partial class MainWindow : Window
         _settingsWindow = window;
         window.ConfigPreviewChanged += previewConfig => _overlayWindow.ApplyConfig(previewConfig);
         window.ConfigSaved += (_, _) => ReloadConfigAfterSettingsSaved();
+        window.OcrDependenciesInstalled += (_, _) =>
+        {
+            MarkOcrEnvironmentSetupCompleted("settings_install");
+            ScheduleOcrWarmUp("ocr_dependencies_installed", delayMs: 250);
+        };
         window.Closed += (_, _) =>
         {
             if (ReferenceEquals(_settingsWindow, window))
@@ -2270,6 +2357,7 @@ public partial class MainWindow : Window
         ApplyConfigToUi();
         UpdateOverlayVisibilityButton();
         UpdateOverlayInputTargetStatus();
+        UpdateOcrEnvironmentSetupButtonVisibility();
         RegisterHotkeys();
         _lastAutoCaptureHash = null;
 
@@ -2300,6 +2388,12 @@ public partial class MainWindow : Window
     {
         try
         {
+            if (_isOcrDependencyInstallRunning)
+            {
+                AddRealtimeDebugLog($"ocr_warmup skipped reason={reason} dependency_install_running=true");
+                return;
+            }
+
             if (_isAutoTranslating)
             {
                 AddRealtimeDebugLog($"ocr_warmup skipped reason={reason} auto_running=true");
@@ -2336,6 +2430,10 @@ public partial class MainWindow : Window
 
             AddRealtimeDebugLog(
                 $"ocr_warmup reason={reason} engine={result.EngineName} mode={result.Mode} cold_start_ms={FormatMs(result.ColdStartMs)} warm_run_ms={FormatMs(result.WarmRunMs)} backend=\"{CleanLog(result.Backend)}\" params=\"{CleanLog(result.Parameters)}\"");
+            if (OcrEngines.Normalize(_config.OcrConfig.OcrEngine).Equals(OcrEngines.PpOcrV5Multilingual, StringComparison.OrdinalIgnoreCase))
+            {
+                MarkOcrEnvironmentSetupCompleted("warmup");
+            }
         }
         catch (Exception ex)
         {
@@ -2359,6 +2457,7 @@ public partial class MainWindow : Window
         var language = LocalizationService.NormalizeLanguage(_config.UiLanguage);
         Title = "LOL Chat OCR Translator";
         AppSubtitleTextBlock.Text = LocalizationService.T(language, "AppSubtitle");
+        InstallOcrDependenciesMainButton.Content = LocalizationService.T(language, "OcrEnvironmentSetupButton");
         StartAutoButton.Content = LocalizationService.T(language, "StartAuto");
         StopAutoButton.Content = LocalizationService.T(language, "StopAuto");
         ManualRecognizeButton.Content = LocalizationService.T(language, "ManualOnce");
@@ -2410,6 +2509,10 @@ public partial class MainWindow : Window
     {
         StartAutoButton.IsEnabled = !_isAutoTranslating;
         StopAutoButton.IsEnabled = _isAutoTranslating;
+        if (InstallOcrDependenciesMainButton.Visibility == Visibility.Visible)
+        {
+            InstallOcrDependenciesMainButton.IsEnabled = !_isOcrDependencyInstallRunning;
+        }
     }
 
     private void ToggleOverlayVisibility()
@@ -3171,6 +3274,68 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         });
+    }
+
+    private void ShowOcrEnvironmentSetupPromptOnce()
+    {
+        if (_config.HasShownOcrEnvironmentSetupPrompt || _config.HasCompletedOcrEnvironmentSetup)
+        {
+            return;
+        }
+
+        _config.HasShownOcrEnvironmentSetupPrompt = true;
+        _configService.Save(_config);
+        TryBeginInvoke(async () =>
+        {
+            if (_config.HasCompletedOcrEnvironmentSetup || _isOcrDependencyInstallRunning || _closeRequested)
+            {
+                return;
+            }
+
+            var choice = MessageBox.Show(
+                this,
+                T("OcrEnvironmentSetupPrompt"),
+                T("OcrEnvironmentSetupPromptTitle"),
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Information,
+                MessageBoxResult.Yes);
+
+            if (choice == MessageBoxResult.Yes)
+            {
+                await InstallOcrDependenciesFromMainAsync("startup_prompt");
+            }
+        });
+    }
+
+    private void MarkOcrEnvironmentSetupCompleted(string reason)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            TryBeginInvoke(() => MarkOcrEnvironmentSetupCompleted(reason));
+            return;
+        }
+
+        if (!_config.HasCompletedOcrEnvironmentSetup)
+        {
+            _config.HasCompletedOcrEnvironmentSetup = true;
+            _configService.Save(_config);
+        }
+
+        AddRealtimeDebugLog($"ocr_environment_setup_completed reason={reason}");
+        UpdateOcrEnvironmentSetupButtonVisibility();
+    }
+
+    private void UpdateOcrEnvironmentSetupButtonVisibility()
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            TryBeginInvoke(UpdateOcrEnvironmentSetupButtonVisibility);
+            return;
+        }
+
+        var shouldShow = !_config.HasCompletedOcrEnvironmentSetup;
+        InstallOcrDependenciesMainButton.Visibility = shouldShow ? Visibility.Visible : Visibility.Collapsed;
+        InstallOcrDependenciesMainButton.IsEnabled = shouldShow && !_isOcrDependencyInstallRunning;
     }
 
     private void SetRealtimeSkip(string reason)
